@@ -1,0 +1,150 @@
+= java-mavenmixin-sonatyperelease
+:_imagesdir: ./
+:toc:
+
+This module provides a link:https://github.com/odavid/maven-plugins[maven mixin] that can be incorporated into any Maven module that is to be released through the http://central.sonatype.org/pages/apache-maven.html[Sonatype OSS repository].
+This reduces the size of the maven `pom.xml` file for that consuming module; it simply needs to reference _this_ module using the `mixin-maven-plugin`.
+
+The appropriate configuration is included in a `<profile>` which can be activated using the `-P` option on the `mvn` command line.
+
+
+
+== How to Configure/Use
+
+To use:
+
+* add the following to the `pom.xml` of the module(s) containing the JDO/DataNucleus entities: +
++
+[source,xml]
+----
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.github.odavid.maven.plugins</groupId>
+            <artifactId>mixin-maven-plugin</artifactId>
+            <version>0.1-alpha-39</version>
+            <extensions>true</extensions>
+            <configuration>
+                <mixins>
+                    <mixin>
+                        <groupId>com.danhaywood.mavenmixin</groupId>
+                        <artifactId>sonatyperelease</artifactId>
+                        <version>0.0.1</version>
+                    </mixin>
+                </mixins>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+----
+
+
+The module can be activated using the `-P` flag; for example:
+
+[source,bash]
+----
+ mvn clean deploy                            \
+     -Pdanhaywood-mavenmixin-sonatyperelease \
+     -Dpgp.secretkey=keyring:id=$KEYID       \
+     -Dpgp.passphrase="literal:$PASSPHRASE"
+----
+
+where `$KEYID` and `$PASSPHRASE` correspond to the credentials used for publishing via Sonatype OSS. 
+
+[TIP]
+====
+For details on how to set up a domain name to publish via Sonatype OSS, see http://central.sonatype.org/pages/apache-maven.html[this user guide] and also http://www.danhaywood.com/2013/07/11/deploying-artifacts-to-maven-central-repo/[this blog post] I wrote up a while back.
+====
+
+
+
+== Known issues
+
+None currently
+
+
+
+== Change Log
+
+* `0.0.1` - first release
+
+
+
+
+== Legal Stuff
+
+=== License
+
+[source]
+----
+Copyright 2016~date Dan Haywood
+
+Licensed under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+----
+
+
+
+=== Dependencies
+
+This mixin module relies on the link:https://github.com/odavid/maven-plugins[com.github.odavid.maven.plugins:mixin-maven-plugin], released under Apache License v2.0.
+
+
+
+== Maven deploy notes
+
+The module is deployed using Sonatype's OSS support (see
+http://central.sonatype.org/pages/apache-maven.html[user guide] and http://www.danhaywood.com/2013/07/11/deploying-artifacts-to-maven-central-repo/[this blog post]).
+
+The `release.sh` script automates the release process.
+It performs the following:
+
+* performs a sanity check (`mvn clean install -o`) that everything builds ok
+* bumps the `pom.xml` to a specified release version, and tag
+* performs a double check (`mvn clean install -o`) that everything still builds ok
+* releases the code using `mvn clean deploy`
+* bumps the `pom.xml` to a specified release version
+
+For example:
+
+[source]
+----
+sh release.sh 0.0.1 \
+              0.0.2-SNAPSHOT \
+              dan@haywood-associates.co.uk \
+              "this is not really my passphrase"
+----
+
+where
+
+* `$1` is the release version
+* `$2` is the snapshot version
+* `$3` is the email of the secret key (`~/.gnupg/secring.gpg`) to use for signing
+* `$4` is the corresponding passphrase for that secret key.
+
+Other ways of specifying the key and passphrase are available, see the `pgp-maven-plugin`'s
+http://kohsuke.org/pgp-maven-plugin/secretkey.html[documentation]).
+
+If the script completes successfully, then push changes:
+
+[source]
+----
+git push origin master
+git push origin 0.0.1
+----
+
+If the script fails to complete, then identify the cause, perform a `git reset --hard` to start over and fix the issue before trying again.
+Note that in the `dom`'s `pom.xml` the `nexus-staging-maven-plugin` has the `autoReleaseAfterClose` setting set to `true` (to automatically stage, close and the release the repo).
+You may want to set this to `false` if debugging an issue.
+
+According to Sonatype's guide, it takes about 10 minutes to sync, but up to 2 hours to update http://search.maven.org[search].
