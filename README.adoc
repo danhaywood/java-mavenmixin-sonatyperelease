@@ -1,6 +1,12 @@
 = java-mavenmixin-sonatyperelease
-:_imagesdir: ./
-:toc:
+
+[TIP]
+====
+UNFORTUNATELY, THIS DOESN'T SEEM TO WORK...
+
+Instead, need to inline the contents; see for example https://github.com/danhaywood/java-mavenmixin-datanucleusenhance[danhaywood/java-mavenmixin-datanucleusenhance]
+====
+
 
 This module provides a link:https://github.com/odavid/maven-plugins[maven mixin] that can be incorporated into any Maven module that is to be released through the http://central.sonatype.org/pages/apache-maven.html[Sonatype OSS repository].
 This reduces the size of the maven `pom.xml` file for that consuming module; it simply needs to reference _this_ module using the `mixin-maven-plugin`.
